@@ -34,7 +34,7 @@ namespace sky_drone {
 
 
 		void getStateInformation(juce::MemoryBlock& destData) override;
-		void setStateInformation(const void* data, int sizeInBytes) override;
+		void setStateInformation(const void* data, int sizeInBytes) override;		
 
 	private:
 		// TODO: add parameters
