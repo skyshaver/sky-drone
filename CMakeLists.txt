@@ -50,6 +50,17 @@ cpmaddpackage(
   SOURCE_DIR
     ${LIB_DIR}/juce
 )
+# https://github.com/adamstark/AudioFile trying for audio file gen for testing
+cpmaddpackage(
+    NAME
+      AUDIOFILE
+    GIT_TAG
+      1.1.4
+    GITHUB_REPOSITORY
+      adamstark/AudioFile
+    SOURCE_DIR
+      ${LIB_DIR}/audiofile
+)
 
 # Adds compiler warning utilities & other.
 include(cmake/CompilerWarnings.cmake)
