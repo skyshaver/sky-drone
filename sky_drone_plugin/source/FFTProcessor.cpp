@@ -46,7 +46,7 @@ namespace sky_drone {
 
 		std::memcpy(fftPtr, inputPtr + writePosition, (fftSize - writePosition) * sizeof(float));
 		if (writePosition > 0) {
-			std::memcpy(fftPtr, inputPtr + writePosition, writePosition * sizeof(float));
+			std::memcpy(fftPtr + fftSize - writePosition, inputPtr, writePosition * sizeof(float));
 		}
 
 		window.multiplyWithWindowingTable(fftPtr, fftSize);

@@ -37,9 +37,9 @@ namespace sky_drone {
 		void setStateInformation(const void* data, int sizeInBytes) override;		
 
 	private:
-		// TODO: add parameters
+		
 
-		// DspJp dspjp;
+		std::array<FFTProcessor, 2> ffts;
 		Parameters parameters{ *this };
 	
 

@@ -38,13 +38,12 @@ END_JUCE_MODULE_DECLARATION
 #include <complex>
 
 
-
 #include "include/Parameters.h"
 #include "include/CustomLookAndFeel.h"
 #include "include/JsonSerializer.h"
+#include "include/FFTProcessor.h"
 #include "include/PluginProcessor.h"
 #include "include/PluginEditor.h"
-#include "include/FFTProcessor.h"
 // #include "include/BypassTransitionSmoother.h"
 // #include "include/MessageOnClick.h"
 // #include "include/LfoVisualizer.h"

@@ -56,12 +56,10 @@ namespace sky_drone {
 		return parameters;
 	}
 
-	void PluginProcessor::prepareToPlay(double sampleRate,
-		int expectedMaxFramesPerBlock) {
-		// Use this method as the place to do any pre-playback
-		// initialization that you need, e.g., allocate memory.
-
-		// dspjp.prepare(sampleRate, expectedMaxFramesPerBlock);
+	void PluginProcessor::prepareToPlay(double sampleRate, int expectedMaxFramesPerBlock) {
+		setLatencySamples(ffts[0].getLatencyInSamples());
+		ffts[0].reset();
+		ffts[1].reset();
 	}
 
 	void PluginProcessor::releaseResources() {
@@ -76,26 +74,29 @@ namespace sky_drone {
 		// In this template code we only support mono or stereo.
 		// Some plugin hosts, such as certain GarageBand versions, will only
 		// load plugins that support stereo bus layouts.
-		if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono() &&
-			layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo()) {
-			return false;
-		}
+		//if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono() &&
+		//	layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo()) {
+		//	return false;
+		//}
 
-		// This checks if the input layout matches the output layout
-		if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet()) {
-			return false;
-		}
+		//// This checks if the input layout matches the output layout
+		//if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet()) {
+		//	return false;
+		//}
 
-		return true;
+		//return true;
+		// FFT process is stero only
+		return layouts.getMainInputChannelSet() == juce::AudioChannelSet::stereo();
 	}
 
-	void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
-		juce::MidiBuffer& midiMessages) {
+	void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
+		
 		juce::ignoreUnused(midiMessages);
-
 		juce::ScopedNoDenormals noDenormals;
+		
 		const auto totalNumInputChannels = getTotalNumInputChannels();
 		const auto totalNumOutputChannels = getTotalNumOutputChannels();
+		const auto numSamples = buffer.getNumSamples();
 
 		// In case we have more outputs than inputs, this code clears any output
 		// channels that didn't contain input data, (because these aren't
@@ -103,8 +104,7 @@ namespace sky_drone {
 		// This is here to avoid people getting screaming feedback
 		// when they first compile a plugin, but obviously you don't need to keep
 		// this code if your algorithm always overwrites all the output channels.
-		for (const auto channelToClear :
-			std::views::iota(totalNumInputChannels, totalNumOutputChannels)) {
+		for (const auto channelToClear : std::views::iota(totalNumInputChannels, totalNumOutputChannels)) {
 			buffer.clear(channelToClear, 0, buffer.getNumSamples());
 		}
 
@@ -112,7 +112,22 @@ namespace sky_drone {
 		// dspjp.setParameterOne(parameters.parameterOne);
 		// TODO: check for bypass
 
-		
+		bool bypassed = false;
+
+		float* channelLeft = buffer.getWritePointer(0);
+		float* channelRight = buffer.getWritePointer(1);
+
+		for (int sample = 0; sample < numSamples; sample++) {
+			float sampleLeft = channelLeft[sample];
+			float sampleRight = channelRight[sample];
+
+			sampleLeft = ffts[0].processSample(sampleLeft, bypassed);
+			sampleRight = ffts[1].processSample(sampleRight, bypassed);
+
+			channelLeft[sample] = sampleLeft;
+			channelRight[sample] = sampleRight;
+		}
+
 		// dspjp.process(buffer);
 	}
 
