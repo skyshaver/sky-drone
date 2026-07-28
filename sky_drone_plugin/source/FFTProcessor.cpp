@@ -39,8 +39,8 @@ namespace sky_drone {
 
 	void FFTProcessor::processFrame(bool bypassed) {
 	
-		auto biggestBin = std::max_element(bins.begin(), bins.end(), [](auto a, auto b) { return a.magnitude < b.magnitude; });
-		DBG(biggestBin->frequency);
+		// auto biggestBin = std::max_element(bins.begin(), bins.end(), [](auto a, auto b) { return a.magnitude < b.magnitude; });
+		// DBG(biggestBin->frequency);
 		const float* inputPtr = inputFifo.data();
 		float* fftPtr = fftData.data();
 
@@ -80,20 +80,13 @@ namespace sky_drone {
 
 	void FFTProcessor::processSpectrum(float* data) {
 		
-		auto* cdata = reinterpret_cast<std::complex<float>*>(data);
-		// int largestBin = 0;
-		//float highestMagnitude = std::abs(cdata[0]);
+		auto* cdata = reinterpret_cast<std::complex<float>*>(data);		
 
 		for (int i = 0; i < numBins; ++i) {
 			float magnitude = std::abs(cdata[i]);
 			float phase = std::arg(cdata[i]);
 
-			// This is where you'd do your spectral processing...
-			//if (magnitude > highestMagnitude) {
-			//	highestMagnitude = magnitude;
-			//	largestBin = i;
-			//}
-			//DBG(largestBin);
+			// This is where you'd do your spectral processing...			
 
 			//-------------------------------------------------------------
 			// https://stackoverflow.com/questions/4633203/extracting-precise-frequencies-from-fft-bins-using-phase-change-between-frames
@@ -142,12 +135,7 @@ namespace sky_drone {
 			float freqAdjust = (1.f / juce::MathConstants<float>::twoPi) * deltaPhase / deltaTime;
 			
 			bins[i].frequency = bins[i].idealFrequency + freqAdjust;
-			bins[i].magnitude = magnitude;
-			
-			// auto avgF = std::accumulate(std::next(bins.begin()), bins.end(), bins.front().frequency, [](auto i, auto e) { return e.frequency; }) / numBins;
-			// DBG(avgF);
-			
-			// DBG(bins[i].frequency);
+			bins[i].magnitude = magnitude;						
 			//-------------------------------------------------------------
 
 
