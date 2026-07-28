@@ -6,18 +6,16 @@ namespace sky_drone {
 	FFTProcessor::FFTProcessor() : fft(fftOrder), window(fftSize + 1, windowingMethod::hann, false) {
 		
 	}
+
+	void FFTProcessor::prepare(float sr) {
+		sampleRate = sr;
+		reset();
+	}
 	
 	int FFTProcessor::getLatencyInSamples() const {
 		return 0;
 	}
 
-	void FFTProcessor::reset() {
-		count = 0;
-		writePosition = 0;
-		std::fill(inputFifo.begin(), inputFifo.end(), 0.f);
-		std::fill(outputFifo.begin(), outputFifo.end(), 0.f);
-	
-	}
 
 	float FFTProcessor::processSample(float& sample, bool bypassed) {
 	
@@ -41,6 +39,8 @@ namespace sky_drone {
 
 	void FFTProcessor::processFrame(bool bypassed) {
 	
+		auto biggestBin = std::max_element(bins.begin(), bins.end(), [](auto a, auto b) { return a.magnitude < b.magnitude; });
+		DBG(biggestBin->frequency);
 		const float* inputPtr = inputFifo.data();
 		float* fftPtr = fftData.data();
 
@@ -53,7 +53,7 @@ namespace sky_drone {
 
 		if (!bypassed) {
 			fft.performRealOnlyForwardTransform(fftPtr, true);
-			// processSpectrum(fftPtr, numBins);
+			processSpectrum(fftPtr);
 			fft.performRealOnlyInverseTransform(fftPtr);
 		}
 
@@ -78,19 +78,91 @@ namespace sky_drone {
 		}
 	}
 
-	void FFTProcessor::processSpectrum(float* data, int numBins) {
+	void FFTProcessor::processSpectrum(float* data) {
 		
 		auto* cdata = reinterpret_cast<std::complex<float>*>(data);
+		// int largestBin = 0;
+		//float highestMagnitude = std::abs(cdata[0]);
 
 		for (int i = 0; i < numBins; ++i) {
 			float magnitude = std::abs(cdata[i]);
 			float phase = std::arg(cdata[i]);
 
 			// This is where you'd do your spectral processing...
+			//if (magnitude > highestMagnitude) {
+			//	highestMagnitude = magnitude;
+			//	largestBin = i;
+			//}
+			//DBG(largestBin);
+
+			//-------------------------------------------------------------
+			// https://stackoverflow.com/questions/4633203/extracting-precise-frequencies-from-fft-bins-using-phase-change-between-frames
+			// https://blogs.zynaptiq.com/bernsee/pitch-shifting-using-the-ft/
+			// https://blogs.zynaptiq.com/bernsee/repo/smbPitchShift.cpp
+			/* compute phase difference */
+			float phaseDiff = phase - lastPhase[i];
+			lastPhase[i] = phase;
+
+			/* subtract expected phase difference */
+			// osamp is oversampling factor 
+			/*
+			2. osamp is the STFT
+			* oversampling factor which also determines the overlap between adjacent STFT
+			* frames. It should at least be 4 for moderate scaling ratios. A value of 32 is
+			* recommended for best quality.
+			*/
+			float osamp = 4.f;
+			float binPhaseOffset = juce::MathConstants<float>::twoPi * (float)i / osamp;
+			float deltaPhase = phaseDiff - binPhaseOffset;
+
+			/* map delta phase into [-Pi, Pi) interval */
+			// better, but obfuscatory...
+			//    deltaPhase -= M_TWOPI * floor(deltaPhase / M_TWOPI + .5);
+
+			while (deltaPhase >= juce::MathConstants<float>::pi)
+				deltaPhase -= juce::MathConstants<float>::twoPi;
+			while (deltaPhase < -juce::MathConstants<float>::pi)
+				deltaPhase += juce::MathConstants<float>::twoPi;
+
+			// Get deviation from bin frequency from the +/- Pi interval 
+			// Compute the k-th partials' true frequency    
+
+			// Start with bin's ideal frequency
+			float bin0Freq = sampleRate / fftSize;
+			bins[i].idealFrequency = (float)i * bin0Freq;
+
+			// Add deltaFreq
+			float sampleTime = 1.f / sampleRate;
+			float samplesInStep = fftSize / osamp;
+			float stepTime = sampleTime * samplesInStep;
+			float deltaTime = stepTime;
+
+			// Definition of frequency is rate of change of phase, i.e. f = dϕ/dt
+			// double deltaPhaseUnit = deltaPhase / M_TWOPI; // range [-.5, .5)
+			float freqAdjust = (1.f / juce::MathConstants<float>::twoPi) * deltaPhase / deltaTime;
+			
+			bins[i].frequency = bins[i].idealFrequency + freqAdjust;
+			bins[i].magnitude = magnitude;
+			
+			// auto avgF = std::accumulate(std::next(bins.begin()), bins.end(), bins.front().frequency, [](auto i, auto e) { return e.frequency; }) / numBins;
+			// DBG(avgF);
+			
+			// DBG(bins[i].frequency);
+			//-------------------------------------------------------------
+
+
 
 			cdata[i] = std::polar(magnitude, phase);
 		}
 	
 	}
 
+	void FFTProcessor::reset() {
+		count = 0;
+		writePosition = 0;
+		std::fill(inputFifo.begin(), inputFifo.end(), 0.f);
+		std::fill(outputFifo.begin(), outputFifo.end(), 0.f);
+		std::fill(lastPhase.begin(), lastPhase.end(), 0.f);
+	
+	}
 } // namespace sky_drone

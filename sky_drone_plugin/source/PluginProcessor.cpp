@@ -57,10 +57,12 @@ namespace sky_drone {
 	}
 
 	void PluginProcessor::prepareToPlay(double sampleRate, int expectedMaxFramesPerBlock) {
-		juce::ignoreUnused(sampleRate, expectedMaxFramesPerBlock);
+		juce::ignoreUnused(expectedMaxFramesPerBlock);
+		
 		setLatencySamples(ffts[0].getLatencyInSamples());
-		ffts[0].reset();
-		ffts[1].reset();
+		for (auto& fft : ffts) {			
+			fft.prepare(static_cast<float>(sampleRate));
+		}		
 	}
 
 	void PluginProcessor::releaseResources() {
@@ -127,9 +129,7 @@ namespace sky_drone {
 
 			channelLeft[sample] = sampleLeft;
 			channelRight[sample] = sampleRight;
-		}
-
-		// dspjp.process(buffer);
+		}		
 	}
 
 	bool PluginProcessor::hasEditor() const {

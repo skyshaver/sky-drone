@@ -7,20 +7,22 @@ namespace sky_drone {
 
 	public:
 		FFTProcessor();
+		void prepare(float sr);
 		// use this to setLatencySamples in PluginProcessor::prepareToPlay
 		int getLatencyInSamples() const;
-		void reset();
 		float processSample(float& sample, bool bypassed);
 		void processFrame(bool bypassed);
-		void processSpectrum(float* data, int numBins);
+		void processSpectrum(float* data);
+		void reset();
 
 	private:
 		static constexpr int fftOrder = 10;
 		static constexpr int fftSize = 1 << fftOrder;		// 1024 Samples	
-		static constexpr int numbBins = fftSize / 2 + 1;	// 513 Bins
+		static constexpr int numBins = fftSize / 2 + 1;		// 513 Bins
 		static constexpr int overlap = 4;					// 75% overlap
 		static constexpr int hopSize = fftSize / overlap;	// 256 Samples
 		static constexpr float windowGainCorrection = 2.f / 3.f; 
+		float sampleRate;
 
 		/*
 		When using a Hann window twice, with 75% overlap, the resulting amplitude is 1.5× too large. 
@@ -40,6 +42,14 @@ namespace sky_drone {
 		std::array<float, fftSize> inputFifo;
 		std::array<float, fftSize> outputFifo;
 		std::array<float, fftSize * 2> fftData;
+		std::array<float, numBins> lastPhase;
+
+		struct bin {
+			float idealFrequency;
+			float frequency;
+			float magnitude;
+		};
+		std::array<bin, numBins> bins;
 
 	};
 
