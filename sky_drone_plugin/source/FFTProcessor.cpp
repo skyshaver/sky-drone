@@ -40,7 +40,7 @@ namespace sky_drone {
 	void FFTProcessor::processFrame(bool bypassed) {
 	
 		auto biggestBin = std::max_element(bins.begin(), bins.end(), [](auto a, auto b) { return a.magnitude < b.magnitude; });
-		DBG("freq: " <<  biggestBin->frequency);
+		DBG("freq: " <<  biggestBin->frequency << " mag: " << biggestBin->magnitude);
 		const float* inputPtr = inputFifo.data();
 		float* fftPtr = fftData.data();
 

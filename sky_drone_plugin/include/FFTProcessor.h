@@ -17,7 +17,7 @@ namespace sky_drone {
 
 	private:
 		static constexpr int fftOrder = 12;
-		static constexpr int fftSize = 1 << fftOrder;		// 1024 Samples	
+		static constexpr int fftSize = 1 << fftOrder;		// 1024 Samples	(at 10 order, each one doubles so 11 is 2048 etc)
 		static constexpr int numBins = fftSize / 2 + 1;		// 513 Bins
 		static constexpr int overlap = 4;					// 75% overlap
 		static constexpr int hopSize = fftSize / overlap;	// 256 Samples

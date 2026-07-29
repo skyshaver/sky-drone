@@ -41,6 +41,7 @@ END_JUCE_MODULE_DECLARATION
 #include "include/Parameters.h"
 #include "include/CustomLookAndFeel.h"
 #include "include/JsonSerializer.h"
+#include "include/NoteConstants.h"
 #include "include/FFTProcessor.h"
 #include "include/PluginProcessor.h"
 #include "include/PluginEditor.h"
