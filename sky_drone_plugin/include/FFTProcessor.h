@@ -16,7 +16,7 @@ namespace sky_drone {
 		void reset();
 
 	private:
-		static constexpr int fftOrder = 10;
+		static constexpr int fftOrder = 12;
 		static constexpr int fftSize = 1 << fftOrder;		// 1024 Samples	
 		static constexpr int numBins = fftSize / 2 + 1;		// 513 Bins
 		static constexpr int overlap = 4;					// 75% overlap
@@ -47,7 +47,7 @@ namespace sky_drone {
 		struct bin {
 			float idealFrequency;
 			float frequency;
-			float magnitude;
+			float magnitude; 
 		};
 		std::array<bin, numBins> bins;
 
