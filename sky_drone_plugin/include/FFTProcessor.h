@@ -3,6 +3,11 @@
 namespace sky_drone {
 
 	// https://audiodev.blog/fft-processing/
+	// YIN method may be better?  https://tonalux.org/blog/yin-pitch-detection-algorithm-explained
+	// https://github.com/adamski/pitch_detector
+	// polyphonic detection based on resonators https://github.com/luciamarock/Polyphonic-Pitch-Detector-for-guitars/tree/master/pdct_lib/Pdct
+	// fft guitar tuner https://arxiv.org/pdf/0912.0745
+
 	class FFTProcessor {
 
 	public:
@@ -17,8 +22,8 @@ namespace sky_drone {
 
 	private:
 		static constexpr int fftOrder = 12;
-		static constexpr int fftSize = 1 << fftOrder;		// 1024 Samples	(at 10 order, each one doubles so 11 is 2048 etc)
-		static constexpr int numBins = fftSize / 2 + 1;		// 513 Bins
+		static constexpr int fftSize = 1 << fftOrder;		// 1024 Samples	(at order 10, each one doubles so 11 is 2048 etc)
+		static constexpr int numBins = fftSize / 2 + 1;		// 513 Bins (at order 10)
 		static constexpr int overlap = 4;					// 75% overlap
 		static constexpr int hopSize = fftSize / overlap;	// 256 Samples
 		static constexpr float windowGainCorrection = 2.f / 3.f; 
