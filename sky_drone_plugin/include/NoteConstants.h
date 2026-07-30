@@ -151,6 +151,52 @@ namespace sky_drone {
 		{ "Bo7", 3951.0f, 107 },
 		{ "Co8", 4186.0f, 108 },
 	});
+
+
+	/*
+	I'd like this to return a reference into the noteInfo range but can't figure out how to handle
+	the array iterators properly, tried std::span but I may be missing something
+	could do it all with pointers but yeah, at least it won't create templates
+	On MSVC we have to use .data() to get underlying pointers, passing .end() and .begin to the ptr version works on clang
+	can also be const auto* (without the * it returns the value)
+	const NoteInfo* closestPtr = findClosestNoteInfoPtr(83.41f, guitarNotes.data(), guitarNotes.data() + std::distance(guitarNotes.begin(), guitarNotes.end()));
+	godbolt for further experimentation https://godbolt.org/z/dG7j9dE9E
+	*/
+	template<class InputIterator>
+	static NoteInfo findClosestNoteInfo(float frequency, InputIterator begin, InputIterator end) {
+		auto lowerBound = std::lower_bound(begin, end, std::floorf(frequency), [](auto& info, float value) { return value > std::floorf(info.frequency); });
+		if (lowerBound == begin)
+			return *begin;
+		if (lowerBound == end)
+			return *(end - 1);
+
+		auto prev = std::prev(lowerBound);
+		auto prevDelta = frequency - prev->frequency;
+		auto lbDelta = lowerBound->frequency - frequency;
+
+		if (lbDelta < prevDelta)
+			return *lowerBound;
+		else
+			return *prev;
+		
+	}
+
+	const NoteInfo* findClosestNoteInfoPtr(float frequency, const NoteInfo* begin, const NoteInfo* end) {
+		auto lowerBound = std::lower_bound(begin, end, std::floorf(frequency), [](auto& info, float value) { return value > std::floorf(info.frequency); });
+		if (lowerBound == begin)
+			return begin;
+		if (lowerBound == end)
+			return end - 1;
+
+		auto prev = std::prev(lowerBound);
+		auto prevDelta = frequency - prev->frequency;
+		auto lbDelta = lowerBound->frequency - frequency;
+
+		if (lbDelta < prevDelta)
+			return lowerBound;
+		else
+			return prev;
+	}
 }		
 
 
