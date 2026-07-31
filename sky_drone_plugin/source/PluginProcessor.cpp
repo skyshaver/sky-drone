@@ -57,7 +57,14 @@ namespace sky_drone {
 	}
 
 	void PluginProcessor::prepareToPlay(double sampleRate, int expectedMaxFramesPerBlock) {
-		juce::ignoreUnused(expectedMaxFramesPerBlock);
+		// juce::ignoreUnused(expectedMaxFramesPerBlock);
+
+		using coeffs = juce::dsp::IIR::Coefficients<float>;
+		lpFilters.state = coeffs::makeLowPass(sampleRate, 1000.f);
+		const juce::dsp::ProcessSpec pspec{ .sampleRate = sampleRate,
+											.maximumBlockSize = static_cast<juce::uint32>(expectedMaxFramesPerBlock),
+											.numChannels = static_cast<juce::uint32>(getTotalNumOutputChannels())};
+		lpFilters.prepare(pspec);
 		
 		setLatencySamples(ffts[0].getLatencyInSamples());
 		for (auto& fft : ffts) {			
@@ -116,6 +123,11 @@ namespace sky_drone {
 		// TODO: check for bypass
 
 		bool bypassed = false;
+
+		// lpf the whole block
+		juce::dsp::AudioBlock<float> block(buffer);
+		juce::dsp::ProcessContextReplacing<float> context(block);
+		lpFilters.process(context);
 
 		float* channelLeft = buffer.getWritePointer(0);
 		float* channelRight = buffer.getWritePointer(1);

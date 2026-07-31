@@ -41,6 +41,8 @@ namespace sky_drone {
 
 		std::array<FFTProcessor, 2> ffts;
 		Parameters parameters{ *this };
+
+		juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> lpFilters;
 	
 
 		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
